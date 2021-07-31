@@ -29,12 +29,14 @@ export const UploadForm = () => {
 
     try {
       // https://react.vlpt.us/redux-middleware/09-cors-and-proxy.html
-      const { data } = await axios.post("/upload", formData, {
+      const { data } = await axios.post("/images", formData, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (e) => {
           setPercent(Math.round((100 * e.loaded) / e.total));
         },
       });
+
+      console.log(data);
 
       toast.success("이미지 업로드 성공!");
       setTimeout(() => {

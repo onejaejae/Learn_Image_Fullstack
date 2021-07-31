@@ -2,7 +2,11 @@ import express from "express";
 import multer from "multer";
 import mime from "mime-types";
 import cors from "cors";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import { Image } from "./models/Image";
 
+dotenv.config();
 const { v4: uuid } = require("uuid");
 
 const storage = multer.diskStorage({
@@ -26,16 +30,39 @@ const upload = multer({
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// localhsot://5000/uploads/파일명으로 접근 가능해짐
-// "/uploads"를 빼면 localhsot://5000/파일명으로 접근 가능
-app.use("/uploads", express.static("uploads"));
-app.use(cors());
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useCreateIndex: true,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("mongoDB connected!!");
 
-app.post("/upload", upload.single("image"), (req, res) => {
-  console.log(req.file);
-  res.json(req.file);
-});
+    // localhsot://5000/uploads/파일명으로 접근 가능해짐
+    // "/uploads"를 빼면 localhsot://5000/파일명으로 접근 가능
+    app.use("/uploads", express.static("uploads"));
+    app.use(cors());
 
-app.listen(5000, () => {
-  console.log(`Express server listening on ${PORT}`);
-});
+    app.get("/images", async (req, res) => {
+      try {
+        const images = await Image.find({});
+        return res.status(200).json({ images });
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    app.post("/images", upload.single("image"), async (req, res) => {
+      const image = await new Image({
+        key: req.file.filename,
+        originalFileName: req.file.originalname,
+      }).save();
+      res.json(image);
+    });
+
+    app.listen(5000, () => {
+      console.log(`Express server listening on ${PORT}`);
+    });
+  })
+  .catch((err) => console.log(err));
