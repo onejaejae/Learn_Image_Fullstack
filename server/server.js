@@ -1,37 +1,19 @@
 import express from "express";
-import multer from "multer";
-import mime from "mime-types";
 import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { Image } from "./models/Image";
+import { routes } from "./routes";
+import ImageRouter from "./routers/imageRouter";
+import userRouter from "./routers/userRouter";
+import { authenticate } from "./middlewares/authentication";
 
 dotenv.config();
-const { v4: uuid } = require("uuid");
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "./uploads"),
-  filename: (req, file, cb) =>
-    cb(null, `${uuid()}.${mime.extension(file.mimetype)}`),
-});
-
-// 필터를 걸어주어 변수를 최소화하는 것이 중요하다!
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    if (["image/jpeg", "image/png"].includes(file.mimetype)) cb(null, true);
-    else cb(new Error("invalid file type."), false);
-  },
-  limits: {
-    fileSize: 1024 * 1024 * 5, // 5MB,
-  },
-});
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const { PORT, MONGO_URI } = process.env;
 
 mongoose
-  .connect(process.env.MONGO_URI, {
+  .connect(MONGO_URI, {
     useCreateIndex: true,
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -43,25 +25,19 @@ mongoose
     // "/uploads"를 빼면 localhsot://5000/파일명으로 접근 가능
     app.use("/uploads", express.static("uploads"));
     app.use(cors());
+    app.use(express.json());
+    app.use(authenticate);
 
-    app.get("/images", async (req, res) => {
-      try {
-        const images = await Image.find({});
-        return res.status(200).json({ images });
-      } catch (error) {
-        console.log(error);
-      }
+    // routers
+    app.use(routes.image, ImageRouter);
+    app.use(routes.user, userRouter);
+
+    app.use((err, req, res, next) => {
+      console.log(err);
+      res.status(500).json({ message: err.message });
     });
 
-    app.post("/images", upload.single("image"), async (req, res) => {
-      const image = await new Image({
-        key: req.file.filename,
-        originalFileName: req.file.originalname,
-      }).save();
-      res.json(image);
-    });
-
-    app.listen(5000, () => {
+    app.listen(PORT, () => {
       console.log(`Express server listening on ${PORT}`);
     });
   })
