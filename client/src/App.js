@@ -1,16 +1,22 @@
 import React from "react";
-import { UploadForm } from "./components/UploadForm";
 import { ToastContainer } from "react-toastify";
-import { ImageList } from "./components/ImageList";
 import "react-toastify/dist/ReactToastify.css";
+import LoginPage from "./pages/LoginPage";
+import MainPage from "./pages/MainPage";
+import RegisterPage from "./pages/RegisterPage";
+import ToolBar from "./components/ToolBar";
+import { Switch, Route } from "react-router-dom";
 
 const App = () => {
   return (
     <div style={{ maxWidth: 600, margin: "auto", marginRight: "auto" }}>
+      <ToolBar />
       <ToastContainer />
-      <h2>사진첩</h2>
-      <UploadForm />
-      <ImageList />
+      <Switch>
+        <Route path="/auth/register" exact component={RegisterPage} />
+        <Route path="/auth/login" exact component={LoginPage} />
+        <Route path="/" component={MainPage} />
+      </Switch>
     </div>
   );
 };

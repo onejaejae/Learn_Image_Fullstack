@@ -21,6 +21,7 @@ export const postRegister = async (req, res, next) => {
       message: "user registered",
       sessionId: session._id,
       name: user.name,
+      userId: user.username,
     });
   } catch (error) {
     next(error);
