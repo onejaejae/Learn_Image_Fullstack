@@ -36,11 +36,11 @@ export const patchLogin = async (req, res, next) => {
     let isValid = false;
     let session = null;
 
-    if (user) {
-      isValid = await compare(password, user.hashedPassword);
-    }
+    if (!user) throw new Error("가입되지 않은 이메일 입니다.");
 
-    if (!isValid) throw new Error("입력하신 정보가 올바르지 않습니다");
+    isValid = await compare(password, user.hashedPassword);
+
+    if (!isValid) throw new Error("입력하신 정보가 올바르지 않습니다.");
     // 로그인 인증을 완료하면 세션에 추가
     else {
       user.sessions.push({ createAt: new Date() });
@@ -52,6 +52,7 @@ export const patchLogin = async (req, res, next) => {
       message: "user Validated",
       sessionId: session._id,
       name: user.name,
+      userId: user.username,
     });
   } catch (error) {
     next(error);
@@ -71,6 +72,21 @@ export const patchLogout = async (req, res, next) => {
     res.json({ message: "user is logged out" });
   } catch (error) {
     console.log(error);
+    next(error);
+  }
+};
+
+export const getMe = (req, res, next) => {
+  try {
+    if (!req.user) throw new Error("권한이 없습니다.");
+
+    return res.status(200).json({
+      message: "success",
+      sessionId: req.headers.sessionid,
+      name: req.user.name,
+      userId: req.user.username,
+    });
+  } catch (error) {
     next(error);
   }
 };
