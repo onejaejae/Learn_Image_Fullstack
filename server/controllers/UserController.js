@@ -1,4 +1,5 @@
 import { User } from "../models/User";
+import { Image } from "../models/Image";
 const { hash, compare } = require("bcryptjs");
 
 export const postRegister = async (req, res, next) => {
@@ -61,7 +62,6 @@ export const patchLogin = async (req, res, next) => {
 
 export const patchLogout = async (req, res, next) => {
   try {
-    console.log(req.user);
     if (!req.user) throw new Error("invalid sessionid");
 
     await User.updateOne(
@@ -86,6 +86,19 @@ export const getMe = (req, res, next) => {
       name: req.user.name,
       userId: req.user.username,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPersonal = async (req, res, next) => {
+  try {
+    // 권한 확인
+    if (!req.user) throw new Error("권한이 없습니다.");
+
+    // 본인의 사진들만
+    const images = await Image.find({ "user._id": req.user._id });
+    return res.status(200).json(images);
   } catch (error) {
     next(error);
   }

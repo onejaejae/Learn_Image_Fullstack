@@ -13,7 +13,6 @@ export const AuthProvider = ({ children }) => {
       axios.defaults.headers.common.sessionid = me.sessionId;
       localStorage.setItem("sessionId", me.sessionId);
     } else if (sessionId) {
-      console.log("sessionId", sessionId);
       axios
         .get("/users/me", { headers: { sessionid: sessionId } })
         .then((result) =>

@@ -10,7 +10,6 @@ const ToolBar = () => {
   const logoutHandler = async () => {
     try {
       await axios.patch("/users/logout");
-
       setMe();
     } catch (error) {
       toast.error(error.message);
