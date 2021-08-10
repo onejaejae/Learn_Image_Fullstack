@@ -23,6 +23,7 @@ export const postRegister = async (req, res, next) => {
       sessionId: session._id,
       name: user.name,
       userId: user.username,
+      id: user._id,
     });
   } catch (error) {
     next(error);
@@ -54,6 +55,7 @@ export const patchLogin = async (req, res, next) => {
       sessionId: session._id,
       name: user.name,
       userId: user.username,
+      id: user._id,
     });
   } catch (error) {
     next(error);
@@ -85,6 +87,7 @@ export const getMe = (req, res, next) => {
       sessionId: req.headers.sessionid,
       name: req.user.name,
       userId: req.user.username,
+      id: req.user._id,
     });
   } catch (error) {
     next(error);
@@ -100,6 +103,7 @@ export const getPersonal = async (req, res, next) => {
     const images = await Image.find({ "user._id": req.user._id });
     return res.status(200).json(images);
   } catch (error) {
+    console.error(error);
     next(error);
   }
 };

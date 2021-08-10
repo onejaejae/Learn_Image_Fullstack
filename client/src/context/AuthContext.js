@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
             name: result.data.name,
             userId: result.data.userId,
             sessionId: result.data.sessionId,
+            id: result.data.id,
           })
         )
         .catch((error) => {

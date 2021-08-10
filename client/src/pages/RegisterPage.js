@@ -34,6 +34,7 @@ const RegisterPage = () => {
         userId: data.userId,
         sessionId: data.sessionId,
         name: data.name,
+        id: data._id,
       });
 
       history.push("/");

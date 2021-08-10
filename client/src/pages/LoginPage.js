@@ -26,6 +26,7 @@ const LoginPage = () => {
         userId: data.userId,
         sessionId: data.sessionId,
         name: data.name,
+        id: data.id,
       });
       history.push("/");
       toast.success("로그인!");

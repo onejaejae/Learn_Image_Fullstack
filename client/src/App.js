@@ -6,6 +6,7 @@ import MainPage from "./pages/MainPage";
 import RegisterPage from "./pages/RegisterPage";
 import ToolBar from "./components/ToolBar";
 import { Switch, Route } from "react-router-dom";
+import ImagePage from "./pages/ImagePage";
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
       <ToolBar />
       <ToastContainer />
       <Switch>
+        <Route path="/images/:imageId" exact component={ImagePage} />
         <Route path="/auth/register" exact component={RegisterPage} />
         <Route path="/auth/login" exact component={LoginPage} />
         <Route path="/" component={MainPage} />

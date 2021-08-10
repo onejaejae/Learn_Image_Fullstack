@@ -11,8 +11,9 @@ export const UploadForm = () => {
   const [FileName, setFileName] = useState(defaultFileName);
   const [Percent, setPercent] = useState(0);
   const [ImgSrc, setImgSrc] = useState(null);
+  const [isPublic, setIsPublic] = useState(true);
 
-  const [Images, setImages] = useContext(ImageContext);
+  const { Images, setImages, myImages, setMyImages } = useContext(ImageContext);
 
   const imageSelectHandler = (e) => {
     const imageFile = e.target.files[0];
@@ -29,6 +30,7 @@ export const UploadForm = () => {
 
     const formData = new FormData();
     formData.append("image", File);
+    formData.append("public", isPublic);
 
     try {
       // https://react.vlpt.us/redux-middleware/09-cors-and-proxy.html
@@ -39,7 +41,8 @@ export const UploadForm = () => {
         },
       });
 
-      setImages([...Images, data]);
+      if (isPublic) setImages([...Images, data]);
+      else setMyImages([...myImages, data]);
 
       toast.success("이미지 업로드 성공!");
       setTimeout(() => {
@@ -49,7 +52,7 @@ export const UploadForm = () => {
         setImgSrc(null);
       }, 3000);
     } catch (error) {
-      toast.error(error.massage);
+      toast.error(error.response.data.message);
       setPercent(0);
       setFileName(defaultFileName);
       setFile(null);
@@ -75,6 +78,13 @@ export const UploadForm = () => {
           onChange={imageSelectHandler}
         />
       </div>
+      <input
+        type="checkbox"
+        id="public-check"
+        value={!isPublic}
+        onChange={() => setIsPublic(!isPublic)}
+      />
+      <label htmlFor="public-check">비공개</label>
       <button
         type="submit"
         style={{
