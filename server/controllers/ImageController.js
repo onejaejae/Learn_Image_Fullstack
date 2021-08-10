@@ -19,18 +19,25 @@ export const postImage = async (req, res, next) => {
   // 유저정보, public 유무 확인
   try {
     if (!req.user) throw new Error("권한이 없습니다.");
+    console.log(req.files);
 
-    const image = await new Image({
-      user: {
-        _id: req.user._id,
-        name: req.user.name,
-        username: req.user.username,
-      },
-      public: req.body.public,
-      key: req.file.filename,
-      originalFileName: req.file.originalname,
-    }).save();
-    res.json(image);
+    const images = await Promise.all(
+      req.files.map(async (file) => {
+        const image = await new Image({
+          user: {
+            _id: req.user._id,
+            name: req.user.name,
+            username: req.user.username,
+          },
+          public: req.body.public,
+          key: file.filename,
+          originalFileName: file.originalname,
+        }).save();
+        return image;
+      })
+    );
+
+    return res.status(200).json(images);
   } catch (error) {
     next(error);
   }
