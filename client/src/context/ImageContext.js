@@ -1,4 +1,10 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { AuthContext } from "./AuthContext";
 
@@ -8,22 +14,29 @@ export const ImageProvider = (prop) => {
   const [Images, setImages] = useState([]);
   const [myImages, setMyImages] = useState([]);
   const [isPublic, setIsPublic] = useState(true);
+  const [imageUrl, setImageUrl] = useState("/images");
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const [me] = useContext(AuthContext);
 
   useEffect(() => {
     const fetchImages = async () => {
       try {
+        setImageLoading(true);
         const {
           data: { images },
-        } = await axios.get("/images");
-        setImages(images);
+        } = await axios.get(imageUrl);
+        setImages((prevData) => [...prevData, ...images]);
       } catch (error) {
+        setImageError(error);
         console.error(error);
+      } finally {
+        setImageLoading(false);
       }
     };
     fetchImages();
-  }, []);
+  }, [imageUrl]);
 
   useEffect(() => {
     const fetchMyImages = async () => {
@@ -45,6 +58,14 @@ export const ImageProvider = (prop) => {
     }
   }, [me]);
 
+  const lastImage = Images.length > 0 ? Images[Images.length - 1]._id : null;
+
+  const loadMoreImages = useCallback(() => {
+    if (imageLoading || !lastImage) return;
+
+    setImageUrl(`/images?imageId=${lastImage}`);
+  }, [lastImage, imageLoading]);
+
   return (
     <ImageContext.Provider
       value={{
@@ -54,6 +75,9 @@ export const ImageProvider = (prop) => {
         setMyImages,
         isPublic,
         setIsPublic,
+        loadMoreImages,
+        imageLoading,
+        imageError,
       }}
     >
       {prop.children}

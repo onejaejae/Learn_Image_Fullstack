@@ -6,9 +6,29 @@ const { promisify } = require("util");
 const fileUnlink = promisify(fs.unlink);
 
 export const getImages = async (req, res, next) => {
+  // offset vs cursor => cursor 방식으로 pagenation 구현
+  // https://velog.io/@minsangk/%EC%BB%A4%EC%84%9C-%EA%B8%B0%EB%B0%98-%ED%8E%98%EC%9D%B4%EC%A7%80%EB%84%A4%EC%9D%B4%EC%85%98-Cursor-based-Pagination-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0
   try {
     // public한 이미지들만 제공
-    const images = await Image.find({ public: true });
+    const { imageId } = req.query;
+    if (imageId && !mongoose.isValidObjectId(imageId))
+      throw new Error("invalid imageId");
+
+    // 첫 페이지의 경우 imageId 존재하지 않기 때문
+    const images = await Image.find(
+      imageId
+        ? {
+            public: true,
+            _id: { $lt: imageId },
+          }
+        : {
+            public: true,
+          }
+    )
+      .sort({ _id: -1 })
+      .limit(20);
+
+    // console.log(images);
     return res.status(200).json({ images });
   } catch (error) {
     next(error);

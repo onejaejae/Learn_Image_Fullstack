@@ -6,7 +6,6 @@ import { ProgressBar } from "./ProgressBar";
 import { ImageContext } from "../context/ImageContext";
 
 export const UploadForm = () => {
-  const defaultFileName = "이미지 파일을 업로드 해주세요";
   const [Files, setFiles] = useState(null);
   const [Percent, setPercent] = useState(0);
   const [isPublic, setIsPublic] = useState(true);
@@ -78,7 +77,7 @@ export const UploadForm = () => {
       key={index}
       src={preview.imgSrc}
       alt=""
-      className={`image-preview ${preview.ImgSrc && "image-preview-show"}`}
+      className={`image-preview ${preview.imgSrc && "image-preview-show"}`}
     />
   ));
 
@@ -86,14 +85,14 @@ export const UploadForm = () => {
     previews.length === 0
       ? "이미지 파일을 업로드 해주세요."
       : previews.reduce(
-          (previous, current) => previous + `${current.fileName}`,
+          (previous, current) => previous + `${current.filename}`,
           ""
         );
 
   return (
     <form onSubmit={imageSubmitHandler}>
-      <div style={{ display: "flex", flexWrap: "wrap" }}>{previewImages}</div>
       <ProgressBar percent={Percent} />
+      <div style={{ display: "flex", flexWrap: "wrap" }}>{previewImages}</div>
       <div className="file-dropper">
         {fileName}
         <input
