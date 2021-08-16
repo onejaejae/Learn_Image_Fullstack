@@ -9,7 +9,6 @@ export const getImages = async (req, res, next) => {
   // offset vs cursor => cursor 방식으로 pagenation 구현
   // https://velog.io/@minsangk/%EC%BB%A4%EC%84%9C-%EA%B8%B0%EB%B0%98-%ED%8E%98%EC%9D%B4%EC%A7%80%EB%84%A4%EC%9D%B4%EC%85%98-Cursor-based-Pagination-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0
   try {
-    // public한 이미지들만 제공
     const { imageId } = req.query;
     if (imageId && !mongoose.isValidObjectId(imageId))
       throw new Error("invalid imageId");
@@ -30,6 +29,26 @@ export const getImages = async (req, res, next) => {
 
     // console.log(images);
     return res.status(200).json({ images });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getImage = async (req, res, next) => {
+  try {
+    const { imageId } = req.params;
+    if (!mongoose.isValidObjectId(imageId)) throw new Error("invalid imageId");
+
+    const image = await Image.findById(imageId);
+    if (!image) throw new Error("해당 이미지가 존재하지 않습니다.");
+
+    // _id끼리 비교하면 같아도 다르다고 해준다
+    // _id로 비교할꺼면 req.user._id.toString()
+    // https://medium.com/@mzndako/comparing-mongoose-object-id-often-fail-a7374a779f6d
+    if (!image.public && (!req.user || req.user.id !== image.user.id))
+      throw new Error("권한이 없습니다.");
+
+    return res.status(200).json(image);
   } catch (error) {
     next(error);
   }

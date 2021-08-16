@@ -1,5 +1,6 @@
 import { User } from "../models/User";
 import { Image } from "../models/Image";
+import mongoose from "mongoose";
 const { hash, compare } = require("bcryptjs");
 
 export const postRegister = async (req, res, next) => {
@@ -99,9 +100,19 @@ export const getPersonal = async (req, res, next) => {
     // 권한 확인
     if (!req.user) throw new Error("권한이 없습니다.");
 
+    const { imageId } = req.query;
+    if (!mongoose.isValidObjectId(imageId)) throw new Error("invalid imageId");
+
     // 본인의 사진들만
-    const images = await Image.find({ "user._id": req.user._id });
-    return res.status(200).json(images);
+    const images = await Image.find(
+      imageId
+        ? { "user._id": req.user._id, _id: { $lt: imageId } }
+        : { "user._id": req.user._id }
+    )
+      .sort({ _id: -1 })
+      .limit(30);
+
+    return res.status(200).json({ images });
   } catch (error) {
     console.error(error);
     next(error);

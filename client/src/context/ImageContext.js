@@ -3,7 +3,7 @@ import React, {
   useState,
   useEffect,
   useContext,
-  useCallback,
+  useRef,
 } from "react";
 import axios from "axios";
 import { AuthContext } from "./AuthContext";
@@ -17,32 +17,36 @@ export const ImageProvider = (prop) => {
   const [imageUrl, setImageUrl] = useState("/images");
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
-
   const [me] = useContext(AuthContext);
+  const pastImageUrlRef = useRef();
 
   useEffect(() => {
-    const fetchImages = async () => {
-      try {
-        setImageLoading(true);
-        const {
-          data: { images },
-        } = await axios.get(imageUrl);
-        setImages((prevData) => [...prevData, ...images]);
-      } catch (error) {
-        setImageError(error);
-        console.error(error);
-      } finally {
+    if (pastImageUrlRef.current === imageUrl) return;
+    setImageLoading(true);
+    axios
+      .get(imageUrl)
+      .then((result) =>
+        isPublic
+          ? setImages((prevData) => [...prevData, ...result.data.images])
+          : setMyImages((prevData) => [...prevData, ...result.data.images])
+      )
+      .catch((err) => {
+        console.log(err);
+        setImageError(err);
+      })
+      .finally(() => {
         setImageLoading(false);
-      }
-    };
-    fetchImages();
-  }, [imageUrl]);
+        pastImageUrlRef.current = imageUrl;
+      });
+  }, [imageUrl, isPublic]);
 
   useEffect(() => {
     const fetchMyImages = async () => {
       try {
-        const { data } = await axios.get("/users/personal");
-        setMyImages(data);
+        const {
+          data: { images },
+        } = await axios.get("/users/personal/images");
+        setMyImages(images);
       } catch (error) {
         console.error(error);
       }
@@ -58,26 +62,17 @@ export const ImageProvider = (prop) => {
     }
   }, [me]);
 
-  const lastImage = Images.length > 0 ? Images[Images.length - 1]._id : null;
-
-  const loadMoreImages = useCallback(() => {
-    if (imageLoading || !lastImage) return;
-
-    setImageUrl(`/images?imageId=${lastImage}`);
-  }, [lastImage, imageLoading]);
-
   return (
     <ImageContext.Provider
       value={{
-        Images,
+        Images: isPublic ? Images : myImages,
         setImages,
-        myImages,
         setMyImages,
         isPublic,
         setIsPublic,
-        loadMoreImages,
         imageLoading,
         imageError,
+        setImageUrl,
       }}
     >
       {prop.children}

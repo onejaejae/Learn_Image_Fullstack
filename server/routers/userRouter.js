@@ -10,7 +10,7 @@ import {
 const userRouter = express.Router();
 
 userRouter.get("/me", getMe);
-userRouter.get("/personal", getPersonal);
+userRouter.get("/personal/images", getPersonal);
 userRouter.post("/register", postRegister);
 userRouter.patch("/login", patchLogin);
 userRouter.patch("/logout", patchLogout);

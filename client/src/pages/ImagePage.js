@@ -5,43 +5,64 @@ import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
-import { filter } from "bluebird";
 
 const ImagePage = () => {
   const { imageId } = useParams();
-  const { Images, myImages, setImages, setMyImages } = useContext(ImageContext);
+  const { Images, setImages, setMyImages } = useContext(ImageContext);
   const [me] = useContext(AuthContext);
   const [hasLiked, setHasLiked] = useState(false);
+  const [image, setImage] = useState();
+  const [error, setError] = useState(false);
   const history = useHistory();
 
-  const image =
-    Images.find((image) => image._id === imageId) ||
-    myImages.find((image) => image._id === imageId);
+  useEffect(() => {
+    const img = Images.find((image) => image._id === imageId);
+    if (img) setImage(img);
+  }, [Images, imageId]);
+
+  useEffect(() => {
+    if (image && image._id === imageId) return;
+    else
+      axios
+        .get(`/images/${imageId}`)
+        .then(({ data }) => {
+          setError(false);
+          setImage(data);
+        })
+        .catch((err) => {
+          setError(true);
+          toast.error(err.response.data.message);
+        });
+  }, [imageId, image]);
 
   useEffect(() => {
     if (me && image && image.likes.includes(me.id)) setHasLiked(true);
   }, [me, image]);
 
-  if (!image) return <h3>Loading...</h3>;
+  if (error) return <h3>Error...</h3>;
+  else if (!image) return <h3>Loading...</h3>;
 
   const onSubmit = async () => {
     try {
       const { data } = await axios.patch(
         `/images/${image._id}/${hasLiked ? "unlike" : "like"}`
       );
+
       setHasLiked(!hasLiked);
 
       const updateImage = (images, image) => {
         return [...images.filter((image) => image._id !== imageId), image].sort(
-          (a, b) =>
-            new Date(a.createAt).getTime() - new Date(b.createAt).getTime()
+          (a, b) => {
+            if (a._id < b._id) return 1;
+            else return -1;
+          }
         );
       };
 
       hasLiked ? toast.success("좋아요 취소") : toast.success("좋아요!");
 
-      if (data.public) setImages(updateImage(Images, data));
-      else setMyImages(updateImage(myImages, data));
+      if (data.public) setImages((prevData) => updateImage(prevData, data));
+      setMyImages((prevData) => updateImage(prevData, data));
     } catch (error) {
       console.error(error);
       toast.error(error.message);
@@ -53,8 +74,12 @@ const ImagePage = () => {
       if (!window.confirm("정말 해당 이미지를 삭제하시겠습니까?")) return;
       const { data } = await axios.delete(`/images/${imageId}`);
 
-      setImages(Images.filter((image) => image._id !== imageId));
-      setMyImages(myImages.filter((image) => image._id !== imageId));
+      setImages((prevData) =>
+        prevData.filter((image) => image._id !== imageId)
+      );
+      setMyImages((prevData) =>
+        prevData.filter((image) => image._id !== imageId)
+      );
 
       toast.success(data.message);
       history.push("/");

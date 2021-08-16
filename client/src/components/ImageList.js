@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useEffect } from "react";
+import React, { useContext, useRef, useEffect, useCallback } from "react";
 import { ImageContext } from "../context/ImageContext";
 import { AuthContext } from "../context/AuthContext";
 import { Link } from "react-router-dom";
@@ -7,16 +7,23 @@ import "./ImageList.css";
 export const ImageList = () => {
   const {
     Images,
-    myImages,
     isPublic,
     setIsPublic,
-    loadMoreImages,
     imageLoading,
     imageError,
+    setImageUrl,
   } = useContext(ImageContext);
 
   const [me] = useContext(AuthContext);
   const elementRef = useRef(null);
+
+  const loadMoreImages = useCallback(() => {
+    if (Images.length === 0 || imageLoading) return;
+    const lastImage = Images[Images.length - 1]._id;
+    setImageUrl(
+      `${isPublic ? "" : "/users/personal"}/images?imageId=${lastImage}`
+    );
+  }, [Images, imageLoading, isPublic, setImageUrl]);
 
   useEffect(() => {
     if (!elementRef.current) return;
@@ -27,31 +34,18 @@ export const ImageList = () => {
     return () => observer.disconnect();
   }, [loadMoreImages]);
 
-  const imgList = isPublic
-    ? Images.map((image, index) => (
-        <Link
-          key={image.key}
-          to={`/images/${image._id}`}
-          ref={index + 5 === Images.length ? elementRef : null}
-        >
-          <img
-            src={`http://localhost:5000/uploads/${image.key}`}
-            alt="업로드 사진"
-          />
-        </Link>
-      ))
-    : myImages.map((image, index) => (
-        <Link
-          key={image.key}
-          to={`/images/${image._id}`}
-          ref={index + 5 === myImages.length ? elementRef : null}
-        >
-          <img
-            src={`http://localhost:5000/uploads/${image.key}`}
-            alt="업로드 사진"
-          />
-        </Link>
-      ));
+  const imgList = Images.map((image, index) => (
+    <Link
+      key={image.key}
+      to={`/images/${image._id}`}
+      ref={index + 5 === Images.length ? elementRef : null}
+    >
+      <img
+        src={`http://localhost:5000/uploads/${image.key}`}
+        alt="업로드 사진"
+      />
+    </Link>
+  ));
 
   return (
     <div>
