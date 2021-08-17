@@ -41,7 +41,7 @@ export const ImageList = () => {
       ref={index + 5 === Images.length ? elementRef : null}
     >
       <img
-        src={`http://localhost:5000/uploads/${image.key}`}
+        src={`https://imagefullstack.s3.ap-northeast-2.amazonaws.com/raw/${image.key}`}
         alt="업로드 사진"
       />
     </Link>
