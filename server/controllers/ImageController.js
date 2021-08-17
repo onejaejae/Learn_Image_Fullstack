@@ -1,6 +1,7 @@
 import { Image } from "../models/Image";
 import fs from "fs";
 import mongoose from "mongoose";
+import { s3 } from "../aws";
 const { promisify } = require("util");
 
 const fileUnlink = promisify(fs.unlink);
@@ -58,7 +59,6 @@ export const postImage = async (req, res, next) => {
   // 유저정보, public 유무 확인
   try {
     if (!req.user) throw new Error("권한이 없습니다.");
-    console.log(req.files);
 
     const images = await Promise.all(
       req.files.map(async (file) => {
@@ -69,7 +69,7 @@ export const postImage = async (req, res, next) => {
             username: req.user.username,
           },
           public: req.body.public,
-          key: file.filename,
+          key: file.key.replace("raw/", ""),
           originalFileName: file.originalname,
         }).save();
         return image;
@@ -97,8 +97,17 @@ export const deleteImage = async (req, res, next) => {
     const image = await await Image.findByIdAndDelete(imageId);
     if (!image)
       return res.json({ message: "요청하신 사진은 이미 삭제되었습니다." });
-    await fileUnlink(`./uploads/${image.key}`);
+    // await fileUnlink(`./uploads/${image.key}`);
 
+    s3.deleteObject(
+      {
+        Bucket: "imagefullstack",
+        Key: `raw/${image.key}`,
+      },
+      (err, data) => {
+        if (err) throw err;
+      }
+    );
     return res.json({ message: "요청하신 이미지가 삭제되었습니다." });
   } catch (error) {
     next(error);
