@@ -1,10 +1,12 @@
 import { Image } from "../models/Image";
 import fs from "fs";
 import mongoose from "mongoose";
-import { s3 } from "../aws";
-const { promisify } = require("util");
+import { s3, getSignedUrl } from "../aws";
+import mime from "mime-types";
 
-const fileUnlink = promisify(fs.unlink);
+const { promisify } = require("util");
+const { v4: uuid } = require("uuid");
+// const fileUnlink = promisify(fs.unlink);
 
 export const getImages = async (req, res, next) => {
   // offset vs cursor => cursor 방식으로 pagenation 구현
@@ -28,7 +30,6 @@ export const getImages = async (req, res, next) => {
       .sort({ _id: -1 })
       .limit(20);
 
-    // console.log(images);
     return res.status(200).json({ images });
   } catch (error) {
     next(error);
@@ -55,32 +56,83 @@ export const getImage = async (req, res, next) => {
   }
 };
 
+export const postPresigned = async (req, res, next) => {
+  try {
+    if (!req.user) throw new Error("권한이 없습니다.");
+
+    const { contentTypes } = req.body;
+    if (!Array.isArray(contentTypes)) throw new Error("invalid contentTypes");
+
+    const presignedData = await Promise.all(
+      contentTypes.map(async (contentType) => {
+        const imageKey = `${uuid()}.${mime.extension(contentType)}`;
+        const key = `raw/${imageKey}`;
+        const presigned = await getSignedUrl({ key });
+        return { imageKey, presigned };
+      })
+    );
+
+    return res.status(200).json(presignedData);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const postImage = async (req, res, next) => {
   // 유저정보, public 유무 확인
   try {
     if (!req.user) throw new Error("권한이 없습니다.");
+    const { images, isPublic } = req.body;
 
-    const images = await Promise.all(
-      req.files.map(async (file) => {
-        const image = await new Image({
+    const imageDocs = await Promise.all(
+      images.map(async (image) => {
+        const img = await new Image({
           user: {
             _id: req.user._id,
             name: req.user.name,
             username: req.user.username,
           },
-          public: req.body.public,
-          key: file.key.replace("raw/", ""),
-          originalFileName: file.originalname,
+          public: isPublic,
+          key: image.imageKey,
+          originalFileName: image.originalname,
         }).save();
-        return image;
+
+        return img;
       })
     );
 
-    return res.status(200).json(images);
+    return res.status(200).json(imageDocs);
   } catch (error) {
     next(error);
   }
 };
+
+// export const postImage = async (req, res, next) => {
+//   // 유저정보, public 유무 확인
+//   try {
+//     if (!req.user) throw new Error("권한이 없습니다.");
+
+//     const images = await Promise.all(
+//       req.files.map(async (file) => {
+//         const image = await new Image({
+//           user: {
+//             _id: req.user._id,
+//             name: req.user.name,
+//             username: req.user.username,
+//           },
+//           public: req.body.public,
+//           key: file.key.replace("raw/", ""),
+//           originalFileName: file.originalname,
+//         }).save();
+//         return image;
+//       })
+//     );
+
+//     return res.status(200).json(images);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 export const deleteImage = async (req, res, next) => {
   // 유저 권한 확인
