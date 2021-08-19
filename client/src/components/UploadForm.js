@@ -10,6 +10,7 @@ export const UploadForm = () => {
   const [Percent, setPercent] = useState([]);
   const [isPublic, setIsPublic] = useState(true);
   const [previews, setPreviews] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { setImages, setMyImages } = useContext(ImageContext);
   const inputRef = useRef();
 
@@ -38,6 +39,7 @@ export const UploadForm = () => {
   const imageSubmitHandler2 = async (e) => {
     e.preventDefault();
     try {
+      setIsLoading(true);
       const presignedData = await axios.post("/images/presigned", {
         contentTypes: [...Files].map((file) => file.type),
       });
@@ -81,8 +83,6 @@ export const UploadForm = () => {
         isPublic,
       });
 
-      console.log("res", res);
-
       if (isPublic) setImages((prevData) => [...res.data, ...prevData]);
       setMyImages((prevData) => [...res.data, ...prevData]);
 
@@ -91,49 +91,51 @@ export const UploadForm = () => {
         inputRef.current.value = null;
         setPercent([]);
         setPreviews([]);
+        setIsLoading(false);
       }, 3000);
     } catch (error) {
       console.error(error);
       // toast.error(error.response.data.message);
       setPercent([]);
       setPreviews([]);
+      setIsLoading(false);
     }
   };
 
-  const imageSubmitHandler = async (e) => {
-    e.preventDefault();
+  // const imageSubmitHandler = async (e) => {
+  //   e.preventDefault();
 
-    const formData = new FormData();
-    for (let file of Files) {
-      formData.append("image", file);
-    }
-    formData.append("public", isPublic);
+  //   const formData = new FormData();
+  //   for (let file of Files) {
+  //     formData.append("image", file);
+  //   }
+  //   formData.append("public", isPublic);
 
-    try {
-      // https://react.vlpt.us/redux-middleware/09-cors-and-proxy.html
-      const { data } = await axios.post("/images", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (e) => {
-          setPercent(Math.round((100 * e.loaded) / e.total));
-        },
-      });
+  //   try {
+  //     // https://react.vlpt.us/redux-middleware/09-cors-and-proxy.html
+  //     const { data } = await axios.post("/images", formData, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //       onUploadProgress: (e) => {
+  //         setPercent(Math.round((100 * e.loaded) / e.total));
+  //       },
+  //     });
 
-      if (isPublic) setImages((prevData) => [...data, ...prevData]);
-      setMyImages((prevData) => [...data, ...prevData]);
+  //     if (isPublic) setImages((prevData) => [...data, ...prevData]);
+  //     setMyImages((prevData) => [...data, ...prevData]);
 
-      toast.success("이미지 업로드 성공!");
-      setTimeout(() => {
-        inputRef.current.value = null;
-        setPercent([]);
-        setPreviews([]);
-      }, 3000);
-    } catch (error) {
-      console.error(error);
-      toast.error(error.response.data.message);
-      setPercent([]);
-      setPreviews([]);
-    }
-  };
+  //     toast.success("이미지 업로드 성공!");
+  //     setTimeout(() => {
+  //       inputRef.current.value = null;
+  //       setPercent([]);
+  //       setPreviews([]);
+  //     }, 3000);
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error(error.response.data.message);
+  //     setPercent([]);
+  //     setPreviews([]);
+  //   }
+  // };
 
   const previewImages = previews.map((preview, index) => (
     <div key={index}>
@@ -188,6 +190,7 @@ export const UploadForm = () => {
       <label htmlFor="public-check">비공개</label>
       <button
         type="submit"
+        disabled={isLoading}
         style={{
           width: "100%",
           borderRadius: 3,

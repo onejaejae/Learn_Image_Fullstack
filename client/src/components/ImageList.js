@@ -2,6 +2,7 @@ import React, { useContext, useRef, useEffect, useCallback } from "react";
 import { ImageContext } from "../context/ImageContext";
 import { AuthContext } from "../context/AuthContext";
 import { Link } from "react-router-dom";
+import { Image } from "./Image";
 import "./ImageList.css";
 
 export const ImageList = () => {
@@ -40,9 +41,8 @@ export const ImageList = () => {
       to={`/images/${image._id}`}
       ref={index + 5 === Images.length ? elementRef : null}
     >
-      <img
-        src={`https://imagefullstack.s3.ap-northeast-2.amazonaws.com/raw/${image.key}`}
-        alt="업로드 사진"
+      <Image
+        imageUrl={`https://d3qfqa47hf1ig1.cloudfront.net/w140/${image.key}`}
       />
     </Link>
   ));

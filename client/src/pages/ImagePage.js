@@ -94,7 +94,7 @@ const ImagePage = () => {
       <h3>Image Page - {imageId}</h3>
       <img
         style={{ width: "100%" }}
-        src={`https://imagefullstack.s3.ap-northeast-2.amazonaws.com/raw/${image.key}`}
+        src={`https://d3qfqa47hf1ig1.cloudfront.net/w600/${image.key}`}
         alt={image._id}
       ></img>
       <span>좋아요 {image.likes.length}</span>
